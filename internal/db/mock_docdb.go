@@ -16,6 +16,36 @@ type MockDocDB struct {
 	mockConfig *MockConfig
 }
 
+// CreateInstance implements DocumentDB.
+func (*MockDocDB) CreateInstance(input *docdb.CreateDBInstanceInput) (*docdb.CreateDBInstanceOutput, error) {
+	panic("unimplemented")
+}
+
+// DeleteCluster implements DocumentDB.
+func (*MockDocDB) DeleteCluster(input *docdb.DeleteDBClusterInput) (*docdb.DeleteDBClusterOutput, error) {
+	panic("unimplemented")
+}
+
+// DeleteDocument implements DocumentDB.
+func (*MockDocDB) DeleteDocument(collection string, filter interface{}) error {
+	panic("unimplemented")
+}
+
+// DeleteInstance implements DocumentDB.
+func (*MockDocDB) DeleteInstance(input *docdb.DeleteDBInstanceInput) (*docdb.DeleteDBInstanceOutput, error) {
+	panic("unimplemented")
+}
+
+// FindDocument implements DocumentDB.
+func (*MockDocDB) FindDocument(collection string, filter interface{}) (interface{}, error) {
+	panic("unimplemented")
+}
+
+// InsertDocument implements DocumentDB.
+func (*MockDocDB) InsertDocument(collection string, document interface{}) error {
+	panic("unimplemented")
+}
+
 type MockConfig struct {
 	SimulateLatency bool
 	LatencyMs       int
