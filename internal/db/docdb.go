@@ -1,4 +1,3 @@
-// internal/db/docdb.go
 package db
 
 import (
@@ -20,6 +19,41 @@ type DocumentDB interface {
 
 type DocDB struct {
 	client *docdb.DocDB
+}
+
+// CreateCluster implements DocumentDB.
+func (*DocDB) CreateCluster(input *docdb.CreateDBClusterInput) (*docdb.CreateDBClusterOutput, error) {
+	panic("unimplemented")
+}
+
+// CreateInstance implements DocumentDB.
+func (*DocDB) CreateInstance(input *docdb.CreateDBInstanceInput) (*docdb.CreateDBInstanceOutput, error) {
+	panic("unimplemented")
+}
+
+// DeleteCluster implements DocumentDB.
+func (*DocDB) DeleteCluster(input *docdb.DeleteDBClusterInput) (*docdb.DeleteDBClusterOutput, error) {
+	panic("unimplemented")
+}
+
+// DeleteDocument implements DocumentDB.
+func (*DocDB) DeleteDocument(collection string, filter interface{}) error {
+	panic("unimplemented")
+}
+
+// DeleteInstance implements DocumentDB.
+func (*DocDB) DeleteInstance(input *docdb.DeleteDBInstanceInput) (*docdb.DeleteDBInstanceOutput, error) {
+	panic("unimplemented")
+}
+
+// FindDocument implements DocumentDB.
+func (*DocDB) FindDocument(collection string, filter interface{}) (interface{}, error) {
+	panic("unimplemented")
+}
+
+// InsertDocument implements DocumentDB.
+func (*DocDB) InsertDocument(collection string, document interface{}) error {
+	panic("unimplemented")
 }
 
 func NewDocDB(cfg *config.Config) (*DocDB, error) {
