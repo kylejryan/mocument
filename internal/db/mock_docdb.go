@@ -42,8 +42,17 @@ func (*MockDocDB) FindDocument(collection string, filter interface{}) (interface
 }
 
 // InsertDocument implements DocumentDB.
-func (*MockDocDB) InsertDocument(collection string, document interface{}) error {
-	panic("unimplemented")
+func (m *MockDocDB) InsertDocument(collection string, document interface{}) error {
+	if m.mockConfig.ErrorMode {
+		return errors.New("simulated error")
+	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	if m.mockConfig.SimulateLatency {
+		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
+	}
+	m.documents[collection] = append(m.documents[collection], document)
+	return nil
 }
 
 type MockConfig struct {
