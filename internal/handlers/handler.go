@@ -1,11 +1,8 @@
-// internal/handlers/handler.go
 package handlers
 
 import (
 	"encoding/json"
 	"net/http"
-
-	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/kylejryan/mocument/internal/db"
 )
@@ -24,7 +21,7 @@ func (h *Handler) HandleRequests() {
 	http.HandleFunc("/insert", h.insertDocument)
 	http.HandleFunc("/find", h.findDocument)
 	http.HandleFunc("/update", h.updateDocuments)
-	//http.HandleFunc("/delete", h.deleteDocument)
+	// http.HandleFunc("/delete", h.deleteDocument)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -43,7 +40,14 @@ func (h *Handler) insertDocument(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) findDocument(w http.ResponseWriter, r *http.Request) {
-	filter := r.URL.Query().Get("filter")
+	filterParam := r.URL.Query().Get("filter")
+	var filter map[string]interface{}
+	if filterParam != "" {
+		if err := json.Unmarshal([]byte(filterParam), &filter); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
 	result, err := h.docDB.FindDocument("collection", filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -61,22 +65,10 @@ func (h *Handler) updateDocuments(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := h.docDB.UpdateMany("collection", bson.M{"$set": updateData.Update}, updateData.Filter)
+	err := h.docDB.UpdateMany("collection", updateData.Filter, updateData.Update)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
-
-/*
-func (h *Handler) deleteDocument(w http.ResponseWriter, r *http.Request) {
-	filter := r.URL.Query().Get("filter")
-	err := h.docDB.DeleteDocument("collection", filter)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-*/

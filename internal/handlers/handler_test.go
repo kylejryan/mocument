@@ -1,4 +1,3 @@
-// internal/handlers/handler_test.go
 package handlers
 
 import (
@@ -30,15 +29,20 @@ func TestInsertDocument(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rr.Code)
 }
 
-/*
 func TestFindDocument(t *testing.T) {
 	mockConfig := &db.MockConfig{SimulateLatency: false, ErrorMode: false}
 	mockDocDB := db.NewMockDocDB(mockConfig)
 	handler := NewHandler(mockDocDB)
 
-	mockDocDB.InsertDocument("collection", map[string]interface{}{"name": "test"})
+	err := mockDocDB.InsertDocument("collection", map[string]interface{}{"name": "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	req, err := http.NewRequest("GET", "/find?filter=name=test", nil)
+	// Test finding a specific document
+	filter := map[string]interface{}{"name": "test"}
+	filterBytes, _ := json.Marshal(filter)
+	req, err := http.NewRequest("GET", "/find?filter="+string(filterBytes), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,9 +50,20 @@ func TestFindDocument(t *testing.T) {
 	http.HandlerFunc(handler.findDocument).ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var result map[string]interface{}
+	var result []map[string]interface{}
 	json.NewDecoder(rr.Body).Decode(&result)
-	assert.Equal(t, "test", result["name"])
+	assert.Equal(t, "test", result[0]["name"])
+
+	// Test finding all documents when no filter is provided
+	req, err = http.NewRequest("GET", "/find", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	http.HandlerFunc(handler.findDocument).ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var results []interface{}
+	json.NewDecoder(rr.Body).Decode(&results)
+	assert.NotEmpty(t, results)
 }
-*/
-// Implement similar tests for updateDocuments and deleteDocument...

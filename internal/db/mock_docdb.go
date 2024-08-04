@@ -36,11 +36,6 @@ func (*MockDocDB) DeleteInstance(input *docdb.DeleteDBInstanceInput) (*docdb.Del
 	panic("unimplemented")
 }
 
-// FindDocument implements DocumentDB.
-func (*MockDocDB) FindDocument(collection string, filter interface{}) (interface{}, error) {
-	panic("unimplemented")
-}
-
 // InsertDocument implements DocumentDB.
 func (m *MockDocDB) InsertDocument(collection string, document interface{}) error {
 	if m.mockConfig.ErrorMode {
@@ -88,8 +83,6 @@ func (m *MockDocDB) CreateCluster(input *docdb.CreateDBClusterInput) (*docdb.Cre
 	}, nil
 }
 
-// Going to implement what I wrote below later ...
-/*
 func (m *MockDocDB) FindDocument(collection string, filter interface{}) (interface{}, error) {
 	if m.mockConfig.ErrorMode {
 		return nil, errors.New("simulated error")
@@ -100,12 +93,34 @@ func (m *MockDocDB) FindDocument(collection string, filter interface{}) (interfa
 		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
 	}
 	if documents, ok := m.documents[collection]; ok {
-		// Implement filter logic here...
-		return documents, nil
+		if filter == nil {
+			return documents, nil
+		}
+		if filterMap, ok := filter.(map[string]interface{}); ok {
+			var results []interface{}
+			for _, doc := range documents {
+				if docMap, ok := doc.(map[string]interface{}); ok {
+					match := true
+					for key, value := range filterMap {
+						if docMap[key] != value {
+							match = false
+							break
+						}
+					}
+					if match {
+						results = append(results, doc)
+					}
+				}
+			}
+			if len(results) == 0 {
+				return nil, errors.New("no matching document found")
+			}
+			return results, nil
+		}
+		return nil, errors.New("invalid filter format")
 	}
 	return nil, errors.New("document not found")
 }
-*/
 
 func (m *MockDocDB) UpdateMany(collection string, filter, update interface{}) error {
 	if m.mockConfig.ErrorMode {
@@ -134,21 +149,3 @@ func (m *MockDocDB) UpdateMany(collection string, filter, update interface{}) er
 	}
 	return errors.New("document not found")
 }
-
-/*
-func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error {
-	if m.mockConfig.ErrorMode {
-		return errors.New("simulated error")
-	}
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	if m.mockConfig.SimulateLatency {
-		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
-	}
-	if documents, ok := m.documents[collection]; ok {
-		// Implement delete logic here...
-		return nil
-	}
-	return errors.New("document not found")
-}
-*/
