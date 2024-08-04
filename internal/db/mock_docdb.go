@@ -105,6 +105,7 @@ func (m *MockDocDB) FindDocument(collection string, filter interface{}) (interfa
 	}
 	return nil, errors.New("document not found")
 }
+*/
 
 func (m *MockDocDB) UpdateMany(collection string, filter, update interface{}) error {
 	if m.mockConfig.ErrorMode {
@@ -116,15 +117,25 @@ func (m *MockDocDB) UpdateMany(collection string, filter, update interface{}) er
 		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
 	}
 	if documents, ok := m.documents[collection]; ok {
-		// Implement update logic here...
-		for i := range documents {
-			// Update each document based on filter and update...
+		for i, doc := range documents {
+			// Implement a simple filter logic: match by "name" field
+			if docMap, ok := doc.(map[string]interface{}); ok {
+				if filterMap, ok := filter.(map[string]interface{}); ok {
+					if docMap["name"] == filterMap["name"] {
+						for k, v := range update.(map[string]interface{}) {
+							docMap[k] = v
+						}
+						documents[i] = docMap
+					}
+				}
+			}
 		}
 		return nil
 	}
 	return errors.New("document not found")
 }
 
+/*
 func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error {
 	if m.mockConfig.ErrorMode {
 		return errors.New("simulated error")

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/kylejryan/mocument/internal/db"
 )
 
@@ -21,7 +23,7 @@ func NewHandler(docDB db.DocumentDB) *Handler {
 func (h *Handler) HandleRequests() {
 	http.HandleFunc("/insert", h.insertDocument)
 	http.HandleFunc("/find", h.findDocument)
-	//http.HandleFunc("/update", h.updateDocuments)
+	http.HandleFunc("/update", h.updateDocuments)
 	//http.HandleFunc("/delete", h.deleteDocument)
 	http.ListenAndServe(":8080", nil)
 }
@@ -50,7 +52,6 @@ func (h *Handler) findDocument(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-/*
 func (h *Handler) updateDocuments(w http.ResponseWriter, r *http.Request) {
 	var updateData struct {
 		Filter map[string]interface{} `json:"filter"`
@@ -60,7 +61,7 @@ func (h *Handler) updateDocuments(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := h.docDB.UpdateMany("collection", updateData.Filter, updateData.Update)
+	err := h.docDB.UpdateMany("collection", bson.M{"$set": updateData.Update}, updateData.Filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -68,6 +69,7 @@ func (h *Handler) updateDocuments(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+/*
 func (h *Handler) deleteDocument(w http.ResponseWriter, r *http.Request) {
 	filter := r.URL.Query().Get("filter")
 	err := h.docDB.DeleteDocument("collection", filter)

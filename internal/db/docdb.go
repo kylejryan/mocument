@@ -13,6 +13,7 @@ type DocumentDB interface {
 	CreateInstance(input *docdb.CreateDBInstanceInput) (*docdb.CreateDBInstanceOutput, error)
 	DeleteInstance(input *docdb.DeleteDBInstanceInput) (*docdb.DeleteDBInstanceOutput, error)
 	InsertDocument(collection string, document interface{}) error
+	UpdateMany(collection string, filter, update interface{}) error
 	FindDocument(collection string, filter interface{}) (interface{}, error)
 	DeleteDocument(collection string, filter interface{}) error
 }
@@ -54,6 +55,11 @@ func (*DocDB) FindDocument(collection string, filter interface{}) (interface{}, 
 // InsertDocument implements DocumentDB.
 func (*DocDB) InsertDocument(collection string, document interface{}) error {
 	panic("unimplemented")
+}
+
+func (db *DocDB) UpdateMany(collection string, filter, update interface{}) error {
+	// Implementation for real DocumentDB
+	return nil
 }
 
 func NewDocDB(cfg *config.Config) (*DocDB, error) {
