@@ -2,6 +2,7 @@ package mock
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -68,16 +69,45 @@ func (m *MockDocDB) FindDocument(collection string, filter interface{}) (interfa
 					}
 				}
 			}
-			if len(results) == 0 {
-				return nil, errors.New("no matching document found")
-			}
 			return results, nil
 		}
 		return nil, errors.New("invalid filter format")
 	}
-	return nil, errors.New("document not found")
+	return []interface{}{}, nil // Return an empty slice if collection is not found
 }
 
 func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error {
-	panic("unimplemented")
+	if m.mockConfig.ErrorMode {
+		return errors.New("simulated error")
+	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	if m.mockConfig.SimulateLatency {
+		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
+	}
+	if documents, ok := m.documents[collection]; ok {
+		for i, doc := range documents {
+			if docMap, ok := doc.(map[string]interface{}); ok {
+				if filterMap, ok := filter.(map[string]interface{}); ok {
+					match := true
+					for key, value := range filterMap {
+						if docMap[key] != value {
+							match = false
+							break
+						}
+					}
+					if match {
+						fmt.Printf("Deleting document: %+v\n", docMap)
+						// Delete the document by removing it from the slice
+						m.documents[collection] = append(documents[:i], documents[i+1:]...)
+						return nil
+					}
+				}
+			}
+		}
+		fmt.Println("No matching document found for deletion.")
+		return errors.New("no matching document found")
+	}
+	fmt.Println("Collection not found.")
+	return errors.New("collection not found")
 }

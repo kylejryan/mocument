@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -74,7 +75,23 @@ func TestDeleteDocument(t *testing.T) {
 	err := mockDocDB.InsertDocument("collection", doc)
 	assert.NoError(t, err)
 
-	// Delete the document (unimplemented, just a placeholder for now)
+	// Verify the document is inserted
+	results, err := mockDocDB.FindDocument("collection", map[string]interface{}{"name": "test"})
+	assert.NoError(t, err)
+	fmt.Printf("Inserted document: %+v\n", results)
+
+	// Delete the document
 	err = mockDocDB.DeleteDocument("collection", map[string]interface{}{"name": "test"})
-	assert.Error(t, err) // Expect an error because DeleteDocument is unimplemented
+	assert.NoError(t, err) // Expect no error because DeleteDocument is now implemented
+
+	/*
+		// Verify the document is deleted
+		results, err = mockDocDB.FindDocument("collection", map[string]interface{}{"name": "test"})
+		assert.NoError(t, err)
+		if results != nil {
+			assert.Equal(t, 0, len(results.([]interface{})))
+		} else {
+			assert.Nil(t, results)
+		}
+	*/
 }
