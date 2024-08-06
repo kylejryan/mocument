@@ -60,16 +60,3 @@ func (m *MockDocDB) CreateInstance(input *docdb.CreateDBInstanceInput) (*docdb.C
 func (m *MockDocDB) DeleteInstance(input *docdb.DeleteDBInstanceInput) (*docdb.DeleteDBInstanceOutput, error) {
 	panic("unimplemented")
 }
-
-func (m *MockDocDB) InsertDocument(collection string, document interface{}) error {
-	if m.mockConfig.ErrorMode {
-		return errors.New("simulated error")
-	}
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	if m.mockConfig.SimulateLatency {
-		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
-	}
-	m.documents[collection] = append(m.documents[collection], document)
-	return nil
-}
