@@ -20,7 +20,11 @@ type MyEvent struct {
 var dbClient *mongo.Client
 var secretsClient SecretsManagerClient
 
-func init() {
+func initializeClients() {
+	if os.Getenv("ENV") == "test" {
+		return
+	}
+
 	// Initialize AWS Secrets Manager client with region
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"), // Set the appropriate region
@@ -78,6 +82,7 @@ func Handler(ctx context.Context, event MyEvent) (string, error) {
 }
 
 func main() {
+	initializeClients()
 	lambda.Start(Handler)
 }
 

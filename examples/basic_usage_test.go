@@ -20,8 +20,9 @@ func init() {
 	mockSecretsClient = mock.NewMockSecretsManager()
 	mockSecretsClient.AddSecret("MONGODB_SECRET_ID", "mongodb://localhost:27017")
 
-	// Set the environment variable for the test
+	// Set the environment variables for the test
 	os.Setenv("MONGODB_SECRET_ID", "MONGODB_SECRET_ID")
+	os.Setenv("ENV", "test")
 }
 
 func mockHandler(ctx context.Context, event MyEvent) (string, error) {
