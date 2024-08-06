@@ -1,2 +1,2 @@
 # Usage
-I literally have nothign for right now since this project is still under development
+I'm going to write more here now that I have something semifunctional.
