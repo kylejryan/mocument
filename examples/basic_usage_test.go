@@ -43,7 +43,19 @@ func mockHandler(ctx context.Context, event MyEvent) (string, error) {
 		return "", fmt.Errorf("failed to find document: %w", err)
 	}
 
-	return fmt.Sprintf("Found documents: %+v", results), nil
+	// Ensure that the document was found
+	if len(results.([]interface{})) == 0 {
+		return "", fmt.Errorf("no document found with name: %s", event.Name)
+	}
+
+	// Update the document
+	update := map[string]interface{}{"updated": true}
+	err = collection.UpdateMany("collection", filter, update)
+	if err != nil {
+		return "", fmt.Errorf("failed to update document: %w", err)
+	}
+
+	return fmt.Sprintf("Found documents: %+v, Updated documents: %+v", results, update), nil
 }
 
 func TestHandler(t *testing.T) {
@@ -54,4 +66,5 @@ func TestHandler(t *testing.T) {
 	result, err := mockHandler(context.Background(), event)
 	assert.NoError(t, err)
 	assert.Contains(t, result, "Found documents")
+	assert.Contains(t, result, "Updated documents")
 }

@@ -78,7 +78,14 @@ func Handler(ctx context.Context, event MyEvent) (string, error) {
 		return "", fmt.Errorf("failed to find document: %w", err)
 	}
 
-	return fmt.Sprintf("Found document: %+v", result), nil
+	// Update the document
+	update := map[string]interface{}{"$set": map[string]interface{}{"updated": true}}
+	_, err = collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return "", fmt.Errorf("failed to update document: %w", err)
+	}
+
+	return fmt.Sprintf("Updated document: %+v", update), nil
 }
 
 func main() {
