@@ -21,9 +21,9 @@ The purpose of mocument is to provide a robust, easy-to-use mock version of AWS 
 
 To install mocument, use the following command:
 
-\`\`\`sh
+```sh
 go get github.com/kylejryan/mocument
-\`\`\`
+```
 
 ## Usage
 
@@ -31,7 +31,7 @@ go get github.com/kylejryan/mocument
 
 Here's a basic example of how to use mocument in your project:
 
-\`\`\`go
+```go
 package main
 
 import (
@@ -75,13 +75,13 @@ func Handler(ctx context.Context, event MyEvent) (string, error) {
 func main() {
     lambda.Start(Handler)
 }
-\`\`\`
+```
 
 ### Testing
 
 You can use mocument to write unit tests for your code that interacts with DocumentDB. Here is an example of a test file:
 
-\`\`\`go
+```go
 package main
 
 import (
@@ -130,7 +130,7 @@ func TestHandler(t *testing.T) {
     assert.NoError(t, err)
     assert.Contains(t, result, "Found documents")
 }
-\`\`\`
+```
 
 ## Contributing
 
@@ -139,27 +139,27 @@ We welcome contributions to mocument! If you'd like to contribute, please follow
 1. Fork the repository on GitHub.
 2. Clone your fork locally:
 
-\`\`\`sh
+```sh
 git clone https://github.com/your-username/mocument.git
-\`\`\`
+```
 
 3. Create a branch for your feature or bug fix:
 
-\`\`\`sh
+```sh
 git checkout -b feature-or-bugfix-branch
-\`\`\`
+```
 
 4. Commit your changes with a clear message:
 
-\`\`\`sh
+```sh
 git commit -am "Add new feature or fix bug"
-\`\`\`
+```
 
 5. Push to the branch:
 
-\`\`\`sh
+```sh
 git push origin feature-or-bugfix-branch
-\`\`\`
+```
 
 6. Create a pull request on GitHub, describing your changes.
    
@@ -172,4 +172,3 @@ mocument is licensed under the MIT License. See the LICENSE file for more inform
 ## Acknowledgements
 
 This project is inspired by the need to have reliable and efficient local testing environments for applications that interact with AWS DocumentDB.
-"""
