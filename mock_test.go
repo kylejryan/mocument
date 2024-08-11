@@ -84,14 +84,13 @@ func TestDeleteDocument(t *testing.T) {
 	err = mockDocDB.DeleteDocument("collection", map[string]interface{}{"name": "test"})
 	assert.NoError(t, err) // Expect no error because DeleteDocument is now implemented
 
-	/*
-		// Verify the document is deleted
-		results, err = mockDocDB.FindDocument("collection", map[string]interface{}{"name": "test"})
-		assert.NoError(t, err)
-		if results != nil {
-			assert.Equal(t, 0, len(results.([]interface{})))
-		} else {
-			assert.Nil(t, results)
-		}
-	*/
+	// Verify the document is deleted
+	results, err = mockDocDB.FindDocument("collection", map[string]interface{}{"name": "test"})
+	assert.NoError(t, err)
+	if results != nil {
+		assert.Equal(t, 0, len(results.([]interface{})))
+	} else {
+		assert.Nil(t, results)
+	}
+
 }
