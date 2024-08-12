@@ -1,0 +1,19 @@
+{
+  "ID": "txn001",
+  "CustomerID": "cust123",
+  "Amount": 150.75,
+  "Currency": "USD",
+  "Status": "Pending",
+  "Items": [
+    {
+      "ProductID": "prod001",
+      "Quantity": 1,
+      "Price": 50.25
+    },
+    {
+      "ProductID": "prod002",
+      "Quantity": 2,
+      "Price": 50.25
+    }
+  ]
+}
