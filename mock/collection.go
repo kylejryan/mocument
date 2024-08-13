@@ -19,6 +19,19 @@ func (m *MockDocDB) InsertDocument(collection string, document interface{}) erro
 	return nil
 }
 
+func (m *MockDocDB) InsertMany(collection string, documents []interface{}) error {
+	if m.mockConfig.ErrorMode {
+		return errors.New("simulated error")
+	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	if m.mockConfig.SimulateLatency {
+		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
+	}
+	m.documents[collection] = append(m.documents[collection], documents...)
+	return nil
+}
+
 func (m *MockDocDB) UpdateMany(collection string, filter, update interface{}) error {
 	if m.mockConfig.ErrorMode {
 		return errors.New("simulated error")

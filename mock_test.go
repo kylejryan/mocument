@@ -136,3 +136,38 @@ func TestInsertAndFindTransaction(t *testing.T) {
 	assert.Equal(t, 50.25, items[0].(map[string]interface{})["Price"])
 	assert.Equal(t, 2.0, items[1].(map[string]interface{})["Quantity"])
 }
+
+func TestInsertManyAndFindDocuments(t *testing.T) {
+	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
+	mockDocDB := NewMockDocDB(mockConfig)
+
+	// Prepare documents to insert
+	documents := []interface{}{
+		map[string]interface{}{"name": "test1", "value": 1},
+		map[string]interface{}{"name": "test2", "value": 2},
+		map[string]interface{}{"name": "test3", "value": 3},
+	}
+
+	// Insert multiple documents
+	err := mockDocDB.InsertMany("collection", documents)
+	assert.NoError(t, err)
+
+	// Find all documents
+	results, err := mockDocDB.FindDocument("collection", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(results.([]interface{})))
+
+	// Validate that all documents are correctly inserted
+	expectedValues := []int{1, 2, 3}
+	for i, result := range results.([]interface{}) {
+		assert.Equal(t, expectedValues[i], result.(map[string]interface{})["value"])
+	}
+
+	// Filter and find a specific document
+	filter := map[string]interface{}{"name": "test2"}
+	specificResult, err := mockDocDB.FindDocument("collection", filter)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(specificResult.([]interface{})))
+	assert.Equal(t, "test2", specificResult.([]interface{})[0].(map[string]interface{})["name"])
+	assert.Equal(t, 2, specificResult.([]interface{})[0].(map[string]interface{})["value"])
+}
