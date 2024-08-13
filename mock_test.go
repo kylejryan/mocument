@@ -204,3 +204,74 @@ func TestCountDocuments(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, noMatchCount)
 }
+
+func TestUpdateOne(t *testing.T) {
+	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
+	mockDocDB := NewMockDocDB(mockConfig)
+
+	// Insert multiple documents
+	doc1 := map[string]interface{}{"name": "test1", "value": 1}
+	doc2 := map[string]interface{}{"name": "test2", "value": 2}
+	doc3 := map[string]interface{}{"name": "test3", "value": 3}
+	err := mockDocDB.InsertDocument("collection", doc1)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc2)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc3)
+	assert.NoError(t, err)
+
+	// Update one document
+	filter := map[string]interface{}{"name": "test2"}
+	update := map[string]interface{}{"value": 22}
+	err = mockDocDB.UpdateOne("collection", filter, update)
+	assert.NoError(t, err)
+
+	// Verify the update
+	results, err := mockDocDB.FindDocument("collection", filter)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(results.([]interface{})))
+	assert.Equal(t, 22, results.([]interface{})[0].(map[string]interface{})["value"])
+
+	// Verify other documents are not updated
+	otherFilter := map[string]interface{}{"name": "test1"}
+	otherResults, err := mockDocDB.FindDocument("collection", otherFilter)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(otherResults.([]interface{})))
+	assert.Equal(t, 1, otherResults.([]interface{})[0].(map[string]interface{})["value"])
+}
+
+func TestDeleteMany(t *testing.T) {
+	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
+	mockDocDB := NewMockDocDB(mockConfig)
+
+	// Insert multiple documents
+	doc1 := map[string]interface{}{"name": "test1", "value": 1}
+	doc2 := map[string]interface{}{"name": "test2", "value": 2}
+	doc3 := map[string]interface{}{"name": "test2", "value": 3}
+	doc4 := map[string]interface{}{"name": "test3", "value": 4}
+	err := mockDocDB.InsertDocument("collection", doc1)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc2)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc3)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc4)
+	assert.NoError(t, err)
+
+	// Delete documents with name "test2"
+	filter := map[string]interface{}{"name": "test2"}
+	deletedCount, err := mockDocDB.DeleteMany("collection", filter)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, deletedCount)
+
+	// Verify the remaining documents
+	results, err := mockDocDB.FindDocument("collection", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(results.([]interface{})))
+
+	// Verify the correct documents were deleted
+	for _, result := range results.([]interface{}) {
+		docName := result.(map[string]interface{})["name"]
+		assert.NotEqual(t, "test2", docName)
+	}
+}
