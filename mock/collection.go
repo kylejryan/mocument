@@ -137,3 +137,39 @@ func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error 
 	fmt.Println("Collection not found.")
 	return errors.New("collection not found")
 }
+
+func (m *MockDocDB) CountDocuments(collection string, filter interface{}) (int, error) {
+	if m.mockConfig.ErrorMode {
+		return 0, errors.New("simulated error")
+	}
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	if m.mockConfig.SimulateLatency {
+		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
+	}
+	if documents, ok := m.documents[collection]; ok {
+		if filter == nil {
+			return len(documents), nil
+		}
+		if filterMap, ok := filter.(map[string]interface{}); ok {
+			count := 0
+			for _, doc := range documents {
+				if docMap, ok := doc.(map[string]interface{}); ok {
+					match := true
+					for key, value := range filterMap {
+						if docMap[key] != value {
+							match = false
+							break
+						}
+					}
+					if match {
+						count++
+					}
+				}
+			}
+			return count, nil
+		}
+		return 0, errors.New("invalid filter format")
+	}
+	return 0, errors.New("collection not found")
+}

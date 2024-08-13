@@ -171,3 +171,36 @@ func TestInsertManyAndFindDocuments(t *testing.T) {
 	assert.Equal(t, "test2", specificResult.([]interface{})[0].(map[string]interface{})["name"])
 	assert.Equal(t, 2, specificResult.([]interface{})[0].(map[string]interface{})["value"])
 }
+
+func TestCountDocuments(t *testing.T) {
+	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
+	mockDocDB := NewMockDocDB(mockConfig)
+
+	// Insert multiple documents
+	doc1 := map[string]interface{}{"name": "test1", "value": 1}
+	doc2 := map[string]interface{}{"name": "test2", "value": 2}
+	doc3 := map[string]interface{}{"name": "test3", "value": 3}
+	err := mockDocDB.InsertDocument("collection", doc1)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc2)
+	assert.NoError(t, err)
+	err = mockDocDB.InsertDocument("collection", doc3)
+	assert.NoError(t, err)
+
+	// Count all documents in the collection
+	count, err := mockDocDB.CountDocuments("collection", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, count)
+
+	// Count documents with a filter
+	filter := map[string]interface{}{"value": 2}
+	filteredCount, err := mockDocDB.CountDocuments("collection", filter)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, filteredCount)
+
+	// Count documents with a filter that matches no documents
+	filter = map[string]interface{}{"value": 99}
+	noMatchCount, err := mockDocDB.CountDocuments("collection", filter)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, noMatchCount)
+}
