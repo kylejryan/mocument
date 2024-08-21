@@ -25,7 +25,7 @@ func init() {
 	os.Setenv("ENV", "test")
 }
 
-func mockHandler(ctx context.Context, event MyEvent) (string, error) {
+func mockHandler(_ context.Context, event MyEvent) (string, error) {
 	// Use the mock clients instead of the real AWS clients
 	collection := mockDBClient
 
