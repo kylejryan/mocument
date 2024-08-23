@@ -3,7 +3,7 @@ package mock
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -98,7 +98,7 @@ func TestDeleteDocument(t *testing.T) {
 }
 
 func loadJSONFixture(filePath string, t *testing.T) map[string]interface{} {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	assert.NoError(t, err)
 
 	var doc map[string]interface{}
