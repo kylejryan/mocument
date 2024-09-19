@@ -14,10 +14,12 @@ type MockConfig struct {
 	ErrorMode       bool
 }
 
+type Document map[string]interface{}
+
 type MockDocDB struct {
-	clusters   map[string]interface{}
-	instances  map[string]interface{}
-	documents  map[string][]interface{}
+	clusters   map[string]*docdb.CreateDBClusterInput
+	instances  map[string]*docdb.CreateDBInstanceInput
+	documents  map[string][]Document
 	lock       sync.RWMutex
 	mockConfig *MockConfig
 }

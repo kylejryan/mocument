@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"context"
 	"fmt"
@@ -110,3 +111,4 @@ func NewRealSecretsManager(client *secretsmanager.SecretsManager) *RealSecretsMa
 func (r *RealSecretsManager) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
 	return r.client.GetSecretValue(input)
 }
+*/

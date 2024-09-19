@@ -4,9 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/kylejryan/mocument/matching"
+	"go.uber.org/zap"
 )
 
-func (m *MockDocDB) InsertDocument(collection string, document interface{}) error {
+func (m *MockDocDB) InsertDocument(collection string, document Document) error {
 	if m.mockConfig.ErrorMode {
 		return errors.New("simulated error")
 	}
@@ -101,40 +104,28 @@ func (m *MockDocDB) UpdateOne(collection string, filter, update interface{}) err
 	return errors.New("collection not found")
 }
 
-func (m *MockDocDB) FindDocument(collection string, filter interface{}) (interface{}, error) {
+func (m *MockDocDB) FindDocument(collection string, filter Document) ([]Document, error) {
 	if m.mockConfig.ErrorMode {
+		logger.Error("Simulated error in FindDocument", zap.String("collection", collection))
 		return nil, errors.New("simulated error")
 	}
 	m.lock.RLock()
 	defer m.lock.RUnlock()
+	// Simulate latency if enabled
 	if m.mockConfig.SimulateLatency {
 		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
 	}
-	if documents, ok := m.documents[collection]; ok {
-		if filter == nil {
-			return documents, nil
-		}
-		if filterMap, ok := filter.(map[string]interface{}); ok {
-			var results []interface{}
-			for _, doc := range documents {
-				if docMap, ok := doc.(map[string]interface{}); ok {
-					match := true
-					for key, value := range filterMap {
-						if docMap[key] != value {
-							match = false
-							break
-						}
-					}
-					if match {
-						results = append(results, doc)
-					}
-				}
-			}
-			return results, nil
-		}
-		return nil, errors.New("invalid filter format")
+	documents, ok := m.documents[collection]
+	if !ok {
+		return nil, errors.New("collection not found")
 	}
-	return []interface{}{}, nil // Return an empty slice if collection is not found
+	var results []Document
+	for _, doc := range documents {
+		if matching.matchesFilter(doc, filter) {
+			results = append(results, doc)
+		}
+	}
+	return results, nil
 }
 
 func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error {
@@ -173,40 +164,33 @@ func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error 
 	return errors.New("collection not found")
 }
 
-func (m *MockDocDB) DeleteMany(collection string, filter interface{}) (int, error) {
+func (m *MockDocDB) DeleteMany(collection string, filter Document) (int, error) {
 	if m.mockConfig.ErrorMode {
+		logger.Error("Simulated error in DeleteMany", zap.String("collection", collection))
 		return 0, errors.New("simulated error")
 	}
 	m.lock.Lock()
 	defer m.lock.Unlock()
+	// Simulate latency if enabled
 	if m.mockConfig.SimulateLatency {
 		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
 	}
-	if documents, ok := m.documents[collection]; ok {
-		var remainingDocuments []interface{}
-		deletedCount := 0
-		for _, doc := range documents {
-			if docMap, ok := doc.(map[string]interface{}); ok {
-				match := true
-				if filterMap, ok := filter.(map[string]interface{}); ok {
-					for key, value := range filterMap {
-						if docMap[key] != value {
-							match = false
-							break
-						}
-					}
-				}
-				if match {
-					deletedCount++
-					continue
-				}
-			}
-			remainingDocuments = append(remainingDocuments, doc)
-		}
-		m.documents[collection] = remainingDocuments
-		return deletedCount, nil
+	documents, ok := m.documents[collection]
+	if !ok {
+		return 0, errors.New("collection not found")
 	}
-	return 0, errors.New("collection not found")
+	var newDocuments []Document
+	deletedCount := 0
+	for _, doc := range documents {
+		if matching.MatchesFilter(doc, filter) {
+			deletedCount++
+			logger.Info("Deleting document", zap.Any("document", doc))
+		} else {
+			newDocuments = append(newDocuments, doc)
+		}
+	}
+	m.documents[collection] = newDocuments
+	return deletedCount, nil
 }
 
 func (m *MockDocDB) CountDocuments(collection string, filter interface{}) (int, error) {
