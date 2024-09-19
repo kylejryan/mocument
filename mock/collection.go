@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kylejryan/mocument/matching"
+	"github.com/kylejryan/mocument/internal/utils"
+	"github.com/kylejryan/mocument/logger"
 	"go.uber.org/zap"
 )
+
+func init() {
+	logger.Init()
+}
 
 func (m *MockDocDB) InsertDocument(collection string, document Document) error {
 	if m.mockConfig.ErrorMode {
@@ -106,7 +111,7 @@ func (m *MockDocDB) UpdateOne(collection string, filter, update interface{}) err
 
 func (m *MockDocDB) FindDocument(collection string, filter Document) ([]Document, error) {
 	if m.mockConfig.ErrorMode {
-		logger.Error("Simulated error in FindDocument", zap.String("collection", collection))
+		logger.Get().Debug("Simulated error in FindDocument", zap.String("collection", collection))
 		return nil, errors.New("simulated error")
 	}
 	m.lock.RLock()
@@ -121,7 +126,7 @@ func (m *MockDocDB) FindDocument(collection string, filter Document) ([]Document
 	}
 	var results []Document
 	for _, doc := range documents {
-		if matching.matchesFilter(doc, filter) {
+		if utils.MatchesFilter(doc, filter) {
 			results = append(results, doc)
 		}
 	}
