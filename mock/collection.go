@@ -36,7 +36,11 @@ func (m *MockDocDB) InsertMany(collection string, documents []interface{}) error
 	if m.mockConfig.SimulateLatency {
 		time.Sleep(time.Duration(m.mockConfig.LatencyMs) * time.Millisecond)
 	}
-	m.documents[collection] = append(m.documents[collection], documents...)
+	docSlice := make([]Document, len(documents))
+	for i, doc := range documents {
+		docSlice[i] = doc.(Document)
+	}
+	m.documents[collection] = append(m.documents[collection], docSlice...)
 	return nil
 }
 
@@ -51,21 +55,19 @@ func (m *MockDocDB) UpdateMany(collection string, filter, update interface{}) er
 	}
 	if documents, ok := m.documents[collection]; ok {
 		for i, doc := range documents {
-			if docMap, ok := doc.(map[string]interface{}); ok {
-				if filterMap, ok := filter.(map[string]interface{}); ok {
-					match := true
-					for key, value := range filterMap {
-						if docMap[key] != value {
-							match = false
-							break
-						}
+			if filterMap, ok := filter.(map[string]interface{}); ok {
+				match := true
+				for key, value := range filterMap {
+					if doc[key] != value {
+						match = false
+						break
 					}
-					if match {
-						for k, v := range update.(map[string]interface{}) {
-							docMap[k] = v
-						}
-						documents[i] = docMap
+				}
+				if match {
+					for k, v := range update.(map[string]interface{}) {
+						doc[k] = v
 					}
+					documents[i] = doc
 				}
 			}
 		}
@@ -85,22 +87,20 @@ func (m *MockDocDB) UpdateOne(collection string, filter, update interface{}) err
 	}
 	if documents, ok := m.documents[collection]; ok {
 		for i, doc := range documents {
-			if docMap, ok := doc.(map[string]interface{}); ok {
-				if filterMap, ok := filter.(map[string]interface{}); ok {
-					match := true
-					for key, value := range filterMap {
-						if docMap[key] != value {
-							match = false
-							break
-						}
+			match := true
+			if filterMap, ok := filter.(map[string]interface{}); ok {
+				for key, value := range filterMap {
+					if doc[key] != value {
+						match = false
+						break
 					}
-					if match {
-						for k, v := range update.(map[string]interface{}) {
-							docMap[k] = v
-						}
-						documents[i] = docMap
-						return nil
+				}
+				if match {
+					for k, v := range update.(map[string]interface{}) {
+						doc[k] = v
 					}
+					documents[i] = doc
+					return nil
 				}
 			}
 		}
@@ -126,7 +126,7 @@ func (m *MockDocDB) FindDocument(collection string, filter Document) ([]Document
 	}
 	var results []Document
 	for _, doc := range documents {
-		if utils.MatchesFilter(doc, filter) {
+		if utils.MatchesFilter(utils.Document(doc), utils.Document(filter)) {
 			results = append(results, doc)
 		}
 	}
@@ -144,21 +144,19 @@ func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error 
 	}
 	if documents, ok := m.documents[collection]; ok {
 		for i, doc := range documents {
-			if docMap, ok := doc.(map[string]interface{}); ok {
-				if filterMap, ok := filter.(map[string]interface{}); ok {
-					match := true
-					for key, value := range filterMap {
-						if docMap[key] != value {
-							match = false
-							break
-						}
+			match := true
+			if filterMap, ok := filter.(map[string]interface{}); ok {
+				for key, value := range filterMap {
+					if doc[key] != value {
+						match = false
+						break
 					}
-					if match {
-						fmt.Printf("Deleting document: %+v\n", docMap)
-						// Delete the document by removing it from the slice
-						m.documents[collection] = append(documents[:i], documents[i+1:]...)
-						return nil
-					}
+				}
+				if match {
+					fmt.Printf("Deleting document: %+v\n", doc)
+					// Delete the document by removing it from the slice
+					m.documents[collection] = append(documents[:i], documents[i+1:]...)
+					return nil
 				}
 			}
 		}
@@ -171,7 +169,7 @@ func (m *MockDocDB) DeleteDocument(collection string, filter interface{}) error 
 
 func (m *MockDocDB) DeleteMany(collection string, filter Document) (int, error) {
 	if m.mockConfig.ErrorMode {
-		logger.Error("Simulated error in DeleteMany", zap.String("collection", collection))
+		logger.Get().Error("Simulated error in DeleteMany", zap.String("collection", collection))
 		return 0, errors.New("simulated error")
 	}
 	m.lock.Lock()
@@ -187,9 +185,9 @@ func (m *MockDocDB) DeleteMany(collection string, filter Document) (int, error) 
 	var newDocuments []Document
 	deletedCount := 0
 	for _, doc := range documents {
-		if matching.MatchesFilter(doc, filter) {
+		if utils.MatchesFilter(utils.Document(doc), utils.Document(filter)) {
 			deletedCount++
-			logger.Info("Deleting document", zap.Any("document", doc))
+			logger.Get().Info("Deleting document", zap.Any("document", doc))
 		} else {
 			newDocuments = append(newDocuments, doc)
 		}
@@ -214,17 +212,8 @@ func (m *MockDocDB) CountDocuments(collection string, filter interface{}) (int, 
 		if filterMap, ok := filter.(map[string]interface{}); ok {
 			count := 0
 			for _, doc := range documents {
-				if docMap, ok := doc.(map[string]interface{}); ok {
-					match := true
-					for key, value := range filterMap {
-						if docMap[key] != value {
-							match = false
-							break
-						}
-					}
-					if match {
-						count++
-					}
+				if utils.MatchesFilter(utils.Document(doc), utils.Document(filterMap)) {
+					count++
 				}
 			}
 			return count, nil

@@ -26,9 +26,9 @@ type MockDocDB struct {
 
 func NewMockDocDB(config *MockConfig) *MockDocDB {
 	return &MockDocDB{
-		clusters:   make(map[string]interface{}),
-		instances:  make(map[string]interface{}),
-		documents:  make(map[string][]interface{}),
+		clusters:   make(map[string]*docdb.CreateDBClusterInput),
+		instances:  make(map[string]*docdb.CreateDBInstanceInput),
+		documents:  make(map[string][]Document),
 		mockConfig: config,
 	}
 }
