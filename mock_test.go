@@ -1,6 +1,5 @@
 package mock
 
-/*
 import (
 	"encoding/json"
 	"fmt"
@@ -17,16 +16,16 @@ func TestInsertAndFindDocument(t *testing.T) {
 	mockDocDB := NewMockDocDB(mockConfig)
 
 	// Insert a document
-	doc := map[string]interface{}{"name": "test"}
+	doc := Document{"name": "test"}
 	err := mockDocDB.InsertDocument("collection", doc)
 	assert.NoError(t, err)
 
 	// Find the document
-	filter := map[string]interface{}{"name": "test"}
+	filter := Document{"name": "test"}
 	results, err := mockDocDB.FindDocument("collection", filter)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(results.([]interface{})))
-	assert.Equal(t, "test", results.([]interface{})[0].(map[string]interface{})["name"])
+	assert.Equal(t, 1, len(results))
+	assert.Equal(t, "test", results[0]["name"])
 }
 
 func TestInsertAndFindMultipleDocuments(t *testing.T) {
@@ -34,8 +33,8 @@ func TestInsertAndFindMultipleDocuments(t *testing.T) {
 	mockDocDB := NewMockDocDB(mockConfig)
 
 	// Insert multiple documents
-	doc1 := map[string]interface{}{"name": "test1"}
-	doc2 := map[string]interface{}{"name": "test2"}
+	doc1 := Document{"name": "test1"}
+	doc2 := Document{"name": "test2"}
 	err := mockDocDB.InsertDocument("collection", doc1)
 	assert.NoError(t, err)
 	err = mockDocDB.InsertDocument("collection", doc2)
@@ -44,7 +43,7 @@ func TestInsertAndFindMultipleDocuments(t *testing.T) {
 	// Find all documents
 	results, err := mockDocDB.FindDocument("collection", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(results.([]interface{})))
+	assert.Equal(t, 2, len(results))
 }
 
 func TestUpdateDocument(t *testing.T) {
@@ -52,57 +51,54 @@ func TestUpdateDocument(t *testing.T) {
 	mockDocDB := NewMockDocDB(mockConfig)
 
 	// Insert a document
-	doc := map[string]interface{}{"name": "test", "value": 1}
+	doc := Document{"name": "test", "value": 1}
 	err := mockDocDB.InsertDocument("collection", doc)
 	assert.NoError(t, err)
 
-	// Update the document
-	filter := map[string]interface{}{"name": "test"}
-	update := map[string]interface{}{"value": 2}
+	// Update the document using $set operator
+	filter := Document{"name": "test"}
+	update := Document{"$set": Document{"value": 2}}
 	err = mockDocDB.UpdateMany("collection", filter, update)
 	assert.NoError(t, err)
 
 	// Verify the update
 	results, err := mockDocDB.FindDocument("collection", filter)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(results.([]interface{})))
-	assert.Equal(t, 2, results.([]interface{})[0].(map[string]interface{})["value"])
+	assert.Equal(t, 1, len(results))
+	assert.Equal(t, 2, results[0]["value"])
 }
 
 func TestDeleteDocument(t *testing.T) {
 	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
 	mockDocDB := NewMockDocDB(mockConfig)
 
-	// Insert a document
-	doc := map[string]interface{}{"name": "test"}
+	// Insert a document and capture the inserted document with _id
+	doc := Document{"name": "test"}
 	err := mockDocDB.InsertDocument("collection", doc)
 	assert.NoError(t, err)
 
-	// Verify the document is inserted
-	results, err := mockDocDB.FindDocument("collection", map[string]interface{}{"name": "test"})
+	// Find the inserted document to get its _id
+	results, err := mockDocDB.FindDocument("collection", Document{"name": "test"})
 	assert.NoError(t, err)
 	fmt.Printf("Inserted document: %+v\n", results)
+	assert.Equal(t, 1, len(results))
+	insertedDoc := results[0]
 
-	// Delete the document
-	err = mockDocDB.DeleteDocument("collection", map[string]interface{}{"name": "test"})
-	assert.NoError(t, err) // Expect no error because DeleteDocument is now implemented
+	// Delete the document using its _id
+	err = mockDocDB.DeleteDocument("collection", Document{"_id": insertedDoc["_id"]})
+	assert.NoError(t, err)
 
 	// Verify the document is deleted
-	results, err = mockDocDB.FindDocument("collection", map[string]interface{}{"name": "test"})
+	results, err = mockDocDB.FindDocument("collection", Document{"name": "test"})
 	assert.NoError(t, err)
-	if results != nil {
-		assert.Equal(t, 0, len(results.([]interface{})))
-	} else {
-		assert.Nil(t, results)
-	}
-
+	assert.Equal(t, 0, len(results))
 }
 
-func loadJSONFixture(filePath string, t *testing.T) map[string]interface{} {
+func loadJSONFixture(filePath string, t *testing.T) Document {
 	data, err := os.ReadFile(filePath)
 	assert.NoError(t, err)
 
-	var doc map[string]interface{}
+	var doc Document
 	err = json.Unmarshal(data, &doc)
 	assert.NoError(t, err)
 
@@ -121,17 +117,17 @@ func TestInsertAndFindTransaction(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Find the transaction document
-	filter := map[string]interface{}{"ID": "txn001"}
+	filter := Document{"ID": "txn001"}
 	results, err := mockDocDB.FindDocument("transactions", filter)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(results.([]interface{})))
-	assert.Equal(t, "txn001", results.([]interface{})[0].(map[string]interface{})["ID"])
-	assert.Equal(t, 150.75, results.([]interface{})[0].(map[string]interface{})["Amount"])
-	assert.Equal(t, "USD", results.([]interface{})[0].(map[string]interface{})["Currency"])
-	assert.Equal(t, "Pending", results.([]interface{})[0].(map[string]interface{})["Status"])
+	assert.Equal(t, 1, len(results))
+	assert.Equal(t, "txn001", results[0]["ID"])
+	assert.Equal(t, 150.75, results[0]["Amount"])
+	assert.Equal(t, "USD", results[0]["Currency"])
+	assert.Equal(t, "Pending", results[0]["Status"])
 
 	// Verify the items in the transaction
-	items := results.([]interface{})[0].(map[string]interface{})["Items"].([]interface{})
+	items := results[0]["Items"].([]interface{})
 	assert.Equal(t, 2, len(items))
 	assert.Equal(t, "prod001", items[0].(map[string]interface{})["ProductID"])
 	assert.Equal(t, 50.25, items[0].(map[string]interface{})["Price"])
@@ -142,35 +138,32 @@ func TestInsertManyAndFindDocuments(t *testing.T) {
 	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
 	mockDocDB := NewMockDocDB(mockConfig)
 
-	// Prepare documents to insert
-	documents := []interface{}{
-		map[string]interface{}{"name": "test1", "value": 1},
-		map[string]interface{}{"name": "test2", "value": 2},
-		map[string]interface{}{"name": "test3", "value": 3},
-	}
-
 	// Insert multiple documents
-	err := mockDocDB.InsertMany("collection", documents)
+	err := mockDocDB.InsertMany("collection", []interface{}{
+		Document{"name": "test1", "value": 1},
+		Document{"name": "test2", "value": 2},
+		Document{"name": "test3", "value": 3},
+	})
 	assert.NoError(t, err)
 
 	// Find all documents
 	results, err := mockDocDB.FindDocument("collection", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(results.([]interface{})))
+	assert.Equal(t, 3, len(results))
 
 	// Validate that all documents are correctly inserted
 	expectedValues := []int{1, 2, 3}
-	for i, result := range results.([]interface{}) {
-		assert.Equal(t, expectedValues[i], result.(map[string]interface{})["value"])
+	for i, result := range results {
+		assert.Equal(t, expectedValues[i], int(result["value"].(float64)))
 	}
 
 	// Filter and find a specific document
-	filter := map[string]interface{}{"name": "test2"}
+	filter := Document{"name": "test2"}
 	specificResult, err := mockDocDB.FindDocument("collection", filter)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(specificResult.([]interface{})))
-	assert.Equal(t, "test2", specificResult.([]interface{})[0].(map[string]interface{})["name"])
-	assert.Equal(t, 2, specificResult.([]interface{})[0].(map[string]interface{})["value"])
+	assert.Equal(t, 1, len(specificResult))
+	assert.Equal(t, "test2", specificResult[0]["name"])
+	assert.Equal(t, 2, int(specificResult[0]["value"].(float64)))
 }
 
 func TestCountDocuments(t *testing.T) {
@@ -178,9 +171,9 @@ func TestCountDocuments(t *testing.T) {
 	mockDocDB := NewMockDocDB(mockConfig)
 
 	// Insert multiple documents
-	doc1 := map[string]interface{}{"name": "test1", "value": 1}
-	doc2 := map[string]interface{}{"name": "test2", "value": 2}
-	doc3 := map[string]interface{}{"name": "test3", "value": 3}
+	doc1 := Document{"name": "test1", "value": 1}
+	doc2 := Document{"name": "test2", "value": 2}
+	doc3 := Document{"name": "test3", "value": 3}
 	err := mockDocDB.InsertDocument("collection", doc1)
 	assert.NoError(t, err)
 	err = mockDocDB.InsertDocument("collection", doc2)
@@ -194,13 +187,13 @@ func TestCountDocuments(t *testing.T) {
 	assert.Equal(t, 3, count)
 
 	// Count documents with a filter
-	filter := map[string]interface{}{"value": 2}
+	filter := Document{"value": 2}
 	filteredCount, err := mockDocDB.CountDocuments("collection", filter)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, filteredCount)
 
 	// Count documents with a filter that matches no documents
-	filter = map[string]interface{}{"value": 99}
+	filter = Document{"value": 99}
 	noMatchCount, err := mockDocDB.CountDocuments("collection", filter)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, noMatchCount)
@@ -211,9 +204,9 @@ func TestUpdateOne(t *testing.T) {
 	mockDocDB := NewMockDocDB(mockConfig)
 
 	// Insert multiple documents
-	doc1 := map[string]interface{}{"name": "test1", "value": 1}
-	doc2 := map[string]interface{}{"name": "test2", "value": 2}
-	doc3 := map[string]interface{}{"name": "test3", "value": 3}
+	doc1 := Document{"name": "test1", "value": 1}
+	doc2 := Document{"name": "test2", "value": 2}
+	doc3 := Document{"name": "test3", "value": 3}
 	err := mockDocDB.InsertDocument("collection", doc1)
 	assert.NoError(t, err)
 	err = mockDocDB.InsertDocument("collection", doc2)
@@ -222,23 +215,23 @@ func TestUpdateOne(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Update one document
-	filter := map[string]interface{}{"name": "test2"}
-	update := map[string]interface{}{"value": 22}
+	filter := Document{"name": "test2"}
+	update := Document{"value": 22}
 	err = mockDocDB.UpdateOne("collection", filter, update)
 	assert.NoError(t, err)
 
 	// Verify the update
 	results, err := mockDocDB.FindDocument("collection", filter)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(results.([]interface{})))
-	assert.Equal(t, 22, results.([]interface{})[0].(map[string]interface{})["value"])
+	assert.Equal(t, 1, len(results))
+	assert.Equal(t, 22, int(results[0]["value"].(float64)))
 
 	// Verify other documents are not updated
-	otherFilter := map[string]interface{}{"name": "test1"}
+	otherFilter := Document{"name": "test1"}
 	otherResults, err := mockDocDB.FindDocument("collection", otherFilter)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(otherResults.([]interface{})))
-	assert.Equal(t, 1, otherResults.([]interface{})[0].(map[string]interface{})["value"])
+	assert.Equal(t, 1, len(otherResults))
+	assert.Equal(t, 1, int(otherResults[0]["value"].(float64)))
 }
 
 func TestDeleteMany(t *testing.T) {
@@ -246,10 +239,10 @@ func TestDeleteMany(t *testing.T) {
 	mockDocDB := NewMockDocDB(mockConfig)
 
 	// Insert multiple documents
-	doc1 := map[string]interface{}{"name": "test1", "value": 1}
-	doc2 := map[string]interface{}{"name": "test2", "value": 2}
-	doc3 := map[string]interface{}{"name": "test2", "value": 3}
-	doc4 := map[string]interface{}{"name": "test3", "value": 4}
+	doc1 := Document{"name": "test1", "value": 1}
+	doc2 := Document{"name": "test2", "value": 2}
+	doc3 := Document{"name": "test2", "value": 3}
+	doc4 := Document{"name": "test3", "value": 4}
 	err := mockDocDB.InsertDocument("collection", doc1)
 	assert.NoError(t, err)
 	err = mockDocDB.InsertDocument("collection", doc2)
@@ -260,7 +253,7 @@ func TestDeleteMany(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Delete documents with name "test2"
-	filter := map[string]interface{}{"name": "test2"}
+	filter := Document{"name": "test2"}
 	deletedCount, err := mockDocDB.DeleteMany("collection", filter)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, deletedCount)
@@ -268,12 +261,84 @@ func TestDeleteMany(t *testing.T) {
 	// Verify the remaining documents
 	results, err := mockDocDB.FindDocument("collection", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(results.([]interface{})))
+	assert.Equal(t, 2, len(results))
 
 	// Verify the correct documents were deleted
-	for _, result := range results.([]interface{}) {
-		docName := result.(map[string]interface{})["name"]
+	for _, result := range results {
+		docName := result["name"]
 		assert.NotEqual(t, "test2", docName)
 	}
 }
-*/
+
+func TestFindDocumentWithComplexFilter(t *testing.T) {
+	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
+	mockDocDB := NewMockDocDB(mockConfig)
+
+	// Insert documents
+	docs := []Document{
+		{"name": "Alice", "age": 30, "city": "New York"},
+		{"name": "Bob", "age": 25, "city": "Los Angeles"},
+		{"name": "Charlie", "age": 35, "city": "New York"},
+	}
+	for _, doc := range docs {
+		err := mockDocDB.InsertDocument("users", doc)
+		assert.NoError(t, err)
+	}
+
+	// Test complex filter
+	filter := Document{
+		"age":  Document{"$gt": 28},
+		"city": "New York",
+	}
+	results, err := mockDocDB.FindDocument("users", filter)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(results))
+
+	// Verify results
+	for _, doc := range results {
+		age := doc["age"].(float64)
+		assert.True(t, age > 28)
+		assert.Equal(t, "New York", doc["city"])
+	}
+}
+
+func TestUpdateManyWithComplexUpdate(t *testing.T) {
+	mockConfig := &MockConfig{SimulateLatency: false, ErrorMode: false}
+	mockDocDB := NewMockDocDB(mockConfig)
+
+	// Insert documents
+	docs := []Document{
+		{"name": "Product A", "price": 100, "stock": 50},
+		{"name": "Product B", "price": 200, "stock": 30},
+		{"name": "Product C", "price": 150, "stock": 0},
+	}
+	for _, doc := range docs {
+		err := mockDocDB.InsertDocument("products", doc)
+		assert.NoError(t, err)
+	}
+
+	// Update documents with complex update
+	filter := Document{"stock": Document{"$gt": 0}}
+	update := Document{
+		"$inc": Document{"price": 10},
+		"$set": Document{"updated": true},
+	}
+	err := mockDocDB.UpdateMany("products", filter, update)
+	assert.NoError(t, err)
+
+	// Verify updates
+	results, err := mockDocDB.FindDocument("products", nil)
+	assert.NoError(t, err)
+	for _, doc := range results {
+		stock := int(doc["stock"].(float64))
+		if stock > 0 {
+			assert.Equal(t, true, doc["updated"])
+			expectedPrice := int(doc["price"].(float64))
+			if doc["name"] == "Product A" {
+				assert.Equal(t, 110, expectedPrice)
+			} else if doc["name"] == "Product B" {
+				assert.Equal(t, 210, expectedPrice)
+			}
+		}
+	}
+}
